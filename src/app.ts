@@ -60,13 +60,12 @@ async function main() {
   );
 
   app.listen();
-  runAPI(app, opts, rootLogger);
-  runMetrics(app, opts, rootLogger);
+  runAPI(app, rootLogger);
+  runMetrics(app, rootLogger);
 }
 
 function runAPI(
   relayerApp: StandardRelayerApp<any>,
-  { port }: any,
   logger: Logger
 ) {
   const app = new Koa();
@@ -82,8 +81,8 @@ function runAPI(
   app.use(router.routes());
   app.use(router.allowedMethods());
 
-  port = Number(port) || 3000;
-  app.listen(port, () => {
+  const port = Number(process.env.SEI_UI_PORT) || 3000;
+  app.listen(port, process.env.SEI_BIND_IP || "127.0.0.1", () => {
     logger.info(`Running on ${port}...`);
     logger.info(`For the UI, open http://localhost:${port}`);
     logger.info("Make sure Redis is running on port 6379 by default");
@@ -92,7 +91,6 @@ function runAPI(
 
 function runMetrics(
   relayerApp: StandardRelayerApp<any>,
-  { metricsPort }: any,
   logger: Logger
 ) {
   const app = new Koa();
@@ -105,7 +103,7 @@ function runMetrics(
   app.use(router.routes());
   app.use(router.allowedMethods());
 
-  const port = Number(metricsPort) || 3001;
+  const port = process.env.SEI_METRICS_PORT || 3001;
   app.listen(port, () => {
     logger.info(`Exposing metrics on ${port}...`);
   });
