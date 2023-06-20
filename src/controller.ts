@@ -1,6 +1,6 @@
 import { Next, ParsedVaaWithBytes } from "@wormhole-foundation/relayer-engine";
 import { MyRelayerContext } from "./app";
-import { calculateFee } from "@cosmjs/stargate";
+import { StdFee, coins } from "@cosmjs/stargate";
 import { fromUint8Array } from "js-base64";
 import { getSeiSigningWasmClient } from "./sei";
 import { CONFIG } from "./consts";
@@ -30,7 +30,11 @@ export class ApiController {
         return;
       }
 
-      const fee = calculateFee(1000000, "0.01usei");
+      const fee: StdFee = {
+        amount: coins("10000", "usei"),
+        gas: "1000000",
+        granter: process.env.SEI_FEE_GRANTER,
+      };
       const signingClient = await getSeiSigningWasmClient(wallet.wallet);
 
       // safety isAlreadyRedeemed check will, in some cases, prevent us from submitting a duplicate message that
