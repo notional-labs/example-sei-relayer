@@ -2,7 +2,7 @@ import { Next, ParsedVaaWithBytes } from "@wormhole-foundation/relayer-engine";
 import { MyRelayerContext } from "./app";
 import { StdFee, coins } from "@cosmjs/stargate";
 import { fromUint8Array } from "js-base64";
-import { getSeiSigningWasmClient } from "./sei";
+import { getSeiSigningWasmClient, parseSequenceFromLogSei } from "./sei";
 import { CONFIG } from "./consts";
 import { CHAIN_ID_SEI, TokenBridgePayload, parseTokenTransferPayload } from "@certusone/wormhole-sdk";
 
@@ -58,16 +58,27 @@ export class ApiController {
             vaa: fromUint8Array(signedVaa),
           },
         };
+        try {
+          const tx = await signingClient.execute(
+            wallet.address,
+            CONFIG.seiConfiguration.seiTranslator,
+            msg,
+            fee,
+            "Wormhole - Complete Token Translator Transfer"
+          );
+          
+          ctx.logger.info(`Submitted complete transfer to Sei with hash ${tx.transactionHash}`);
+        } catch (error) {
+          if (error.message.includes("VaaAlreadyExecuted")) {
+            // Do NOT retry workflows when VAA has already been executed
+            ctx.logger.info("VAA to Sei seen but already redeemed... skipping");
+            await next();
+            return;
+          }
 
-        const tx = await signingClient.execute(
-          wallet.address,
-          CONFIG.seiConfiguration.seiTranslator,
-          msg,
-          fee,
-          "Wormhole - Complete Token Translator Transfer"
-        );
-
-        ctx.logger.info(`Submitted complete transfer to Sei with hash ${tx.transactionHash}`);
+          ctx.logger.error("Error Processing VAA");
+          throw error;
+        }
       } else {
         // it's a normal token transfer payload, so submit the VAA directly to token bridge contract
         const msg = {
@@ -75,16 +86,28 @@ export class ApiController {
             data: fromUint8Array(signedVaa),
           },
         };
+        try {
 
-        const tx = await signingClient.execute(
-          wallet.address,
-          ctx.tokenBridge.addresses.sei,
-          msg,
-          fee,
-          "Wormhole - Complete Transfer"
-        );
+          const tx = await signingClient.execute(
+            wallet.address,
+            ctx.tokenBridge.addresses.sei,
+            msg,
+            fee,
+            "Wormhole - Complete Transfer"
+          );
 
-        ctx.logger.info(`Submitted complete transfer to Sei with hash ${tx.transactionHash}`);
+          ctx.logger.info(`Submitted complete transfer to Sei with hash ${tx.transactionHash}`);
+        } catch (error) {
+          if (error.message.includes("VaaAlreadyExecuted")) {
+            // Do NOT retry workflows when VAA has already been executed
+            ctx.logger.info("VAA to Sei seen but already redeemed... skipping");
+            await next();
+            return;
+          }
+
+          ctx.logger.error("Error Processing VAA");
+          throw error;
+        }
       }
     });
 
