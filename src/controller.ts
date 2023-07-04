@@ -31,7 +31,7 @@ export class ApiController {
       }
 
       const fee: StdFee = {
-        amount: coins("10000", "usei"),
+        amount: coins("3500000", "usei"),
         gas: "1000000",
         granter: process.env.SEI_FEE_GRANTER,
       };
