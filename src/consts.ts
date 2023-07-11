@@ -16,7 +16,7 @@ export const CONFIG: Config = process.env.NODE_ENVIRONMENT === "production" ? {
     chainId: "pacific-1",
     restUrl: process.env.SEI_REST_URL,
     rpcUrl: process.env.SEI_RPC_URL,
-    seiTranslator: "TODO FILL OUT"
+    seiTranslator: "sei189adguawugk3e55zn63z8r9ll29xrjwca636ra7v7gxuzn98sxyqwzt47l"
   },
 } : {
   environment: Environment.TESTNET,
