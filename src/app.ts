@@ -47,7 +47,12 @@ async function main() {
   opts.logger = rootLogger;
   opts.privateKeys = privateKeys;
 
-  const app = new StandardRelayerApp<MyRelayerContext>(CONFIG.environment, opts);
+  const app = new StandardRelayerApp<MyRelayerContext>(CONFIG.environment, {
+    ...opts,
+    "providers": {
+      "chains": { "32": { "endpoints": [process.env.SEI_RPC_URL]}}
+    }
+  });
   const fundsCtrl = new ApiController();
 
   // prefilter vaas before they get put in the queue
